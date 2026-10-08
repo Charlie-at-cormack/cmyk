@@ -1,10 +1,7 @@
 """FastAPI app. Binds to localhost only (see __main__); a server install sits behind a reverse proxy."""
 from __future__ import annotations
 
-import base64
-import binascii
 import os
-import secrets
 import shutil
 from contextlib import asynccontextmanager
 import threading
@@ -13,44 +10,31 @@ from pathlib import Path
 
 import pymupdf
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import __version__, jobs, report
+from . import __version__, auth, jobs, report
 from .engine import STAGES, analyse, load_profile, load_profiles
 from .engine.profiles import merge_overrides, DEFAULT_PROFILE
 
 STATIC = Path(__file__).parent / "static"
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "[::1]"}
 
-# Server install (deploy/PLESK.md): the public host name(s) the proxy forwards, plus a login.
+# Server install (deploy/PLESK.md): the public host name(s) the proxy forwards. Setting any of them
+# turns on the login (cmyk/auth.py); a plain localhost run stays open.
 SERVER_HOSTS = {h.strip().lower() for h in os.environ.get("CMYK_ALLOWED_HOSTS", "").split(",") if h.strip()}
 ALLOWED_HOSTS = LOCAL_HOSTS | SERVER_HOSTS
-AUTH_USER = os.environ.get("CMYK_USER", "cmyk")
-AUTH_PASSWORD = os.environ.get("CMYK_PASSWORD", "")
-if SERVER_HOSTS and not AUTH_PASSWORD:
-    raise RuntimeError("CMYK_ALLOWED_HOSTS is set but CMYK_PASSWORD is not: refusing to serve PDFs without a login")
-
-
-def _authorised(header: str | None) -> bool:
-    """HTTP Basic auth, only enforced when CMYK_PASSWORD is set."""
-    if not AUTH_PASSWORD:
-        return True
-    scheme, _, value = (header or "").partition(" ")
-    if scheme.lower() != "basic":
-        return False
-    try:
-        user, _, password = base64.b64decode(value, validate=True).decode("utf-8").partition(":")
-    except (binascii.Error, UnicodeDecodeError):
-        return False
-    return (secrets.compare_digest(user.encode(), AUTH_USER.encode())
-            & secrets.compare_digest(password.encode(), AUTH_PASSWORD.encode()))
+PUBLIC_PATHS = {"/login.html", "/login.js", "/style.css", "/favicon.ico",
+                "/api/auth/state", "/api/auth/setup", "/api/auth/login", "/api/auth/logout"}
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     jobs.cleanup_old()
+    if SERVER_HOSTS and auth.needs_setup():
+        print(f"CMYK first start: open the site and create the login with setup code {auth.setup_code()}",
+              flush=True)
     yield
 
 
@@ -64,13 +48,85 @@ async def local_only(request: Request, call_next):
         request.headers.get("host") or "").startswith("[") else "[::1]"
     if host.lower() not in ALLOWED_HOSTS:
         return JSONResponse({"detail": "Local access only"}, status_code=403)
-    if not _authorised(request.headers.get("authorization")):
-        return Response(status_code=401, headers={"WWW-Authenticate": 'Basic realm="CMYK", charset="UTF-8"'})
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("origin")
         if origin and origin.split("://", 1)[-1].rsplit(":", 1)[0].lower() not in ALLOWED_HOSTS:
             return JSONResponse({"detail": "Cross-site request refused"}, status_code=403)
+    if (SERVER_HOSTS and request.url.path not in PUBLIC_PATHS
+            and not auth.session_email(request.cookies.get(auth.COOKIE))):
+        if request.url.path.startswith("/api/"):
+            return JSONResponse({"detail": "Sign in required"}, status_code=401)
+        return RedirectResponse("/login.html", status_code=303)
     return await call_next(request)
+
+
+class Credentials(BaseModel):
+    email: str = ""
+    password: str = ""
+    code: str = ""
+
+
+def _client(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def _signed_in(request: Request, email: str) -> JSONResponse:
+    resp = JSONResponse({"email": email})
+    resp.set_cookie(auth.COOKIE, auth.make_session(email), max_age=auth.SESSION_DAYS * 86400,
+                    httponly=True, samesite="lax", secure=request.url.scheme == "https")
+    return resp
+
+
+def _server_only(request: Request) -> str:
+    if not SERVER_HOSTS:
+        raise HTTPException(404, "Sign-in is only used on a server install")
+    ip = _client(request)
+    if auth.throttled(ip):
+        raise HTTPException(429, "Too many attempts. Try again in 15 minutes.")
+    return ip
+
+
+@app.get("/api/auth/state")
+def auth_state(request: Request) -> dict:
+    if not SERVER_HOSTS:
+        return {"server": False, "setup": False, "email": None}
+    setup = auth.needs_setup()
+    if setup:
+        auth.setup_code()  # make sure the code the setup page asks for exists
+    return {"server": True, "setup": setup, "email": auth.session_email(request.cookies.get(auth.COOKIE))}
+
+
+@app.post("/api/auth/setup")
+def auth_setup(req: Credentials, request: Request) -> JSONResponse:
+    ip = _server_only(request)
+    try:
+        email = auth.create_account(req.code, req.email, req.password)
+    except FileExistsError:
+        raise HTTPException(409, "The login has already been created. Reload the page to sign in.")
+    except PermissionError:
+        auth.record_failure(ip)
+        raise HTTPException(403, "That setup code is not right.")
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    auth.clear_failures(ip)
+    return _signed_in(request, email)
+
+
+@app.post("/api/auth/login")
+def auth_login(req: Credentials, request: Request) -> JSONResponse:
+    ip = _server_only(request)
+    if not auth.check_login(req.email, req.password):
+        auth.record_failure(ip)
+        raise HTTPException(401, "Email or password is not right.")
+    auth.clear_failures(ip)
+    return _signed_in(request, req.email.strip().lower())
+
+
+@app.post("/api/auth/logout")
+def auth_logout(request: Request) -> JSONResponse:
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(auth.COOKIE, httponly=True, samesite="lax", secure=request.url.scheme == "https")
+    return resp
 
 
 def _job(job_id: str) -> jobs.Job:

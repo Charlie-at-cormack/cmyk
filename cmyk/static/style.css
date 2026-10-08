@@ -47,6 +47,13 @@ textarea{resize:vertical}
 .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:14px 0}
 .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 
+.auth{display:flex;flex-direction:column;gap:6px;text-align:left;border-style:solid;width:min(420px,100%)}
+.auth h1{margin-bottom:4px}
+.auth p{margin:0 0 6px}
+.auth button{margin-top:6px;padding:9px 12px}
+.auth code{font-size:12px}
+.who{color:var(--muted);font-size:12px}
+
 .layout{flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr) 340px;gap:12px;padding:12px}
 .left,.right{overflow:auto;display:flex;flex-direction:column;gap:12px}
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}

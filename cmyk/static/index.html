@@ -19,13 +19,15 @@
   </label>
   <button id="btn-settings" class="ghost" disabled>Profile settings</button>
   <button id="btn-new" class="ghost" hidden>Close job</button>
+  <span class="who" id="who" hidden></span>
+  <button id="btn-logout" class="ghost" hidden>Sign out</button>
 </header>
 
 <main id="drop" class="drop">
   <div class="dropbox" id="dropbox">
     <h1>Drop a print-ready PDF here</h1>
     <p>or <label class="link"><input type="file" id="file" accept="application/pdf,.pdf" hidden>choose a file</label></p>
-    <p class="muted">Files stay on this computer. Nothing is uploaded to the internet.</p>
+    <p class="muted" id="privacy">Files stay on this computer. Nothing is uploaded to the internet.</p>
     <div class="bar" id="upbar" hidden><i></i></div>
     <p class="err" id="uperr"></p>
   </div>

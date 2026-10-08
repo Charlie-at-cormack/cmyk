@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · CMYK Preflight</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand" title="Cormack Media Yield Kontrol">
+    <span class="dots"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
+    <b>CMYK</b><span class="sub">Cormack Media Yield Kontrol</span>
+  </div>
+</header>
+
+<main class="drop">
+  <form class="dropbox auth" id="setup-form" data-api="/api/auth/setup" hidden>
+    <h1>Create the login</h1>
+    <p class="muted">This CMYK server is starting for the first time. Choose the email and password to sign in with.</p>
+    <label class="field">Setup code <input id="s-code" autocomplete="off" spellcheck="false" required></label>
+    <p class="muted small">Shown in the server log (<code>journalctl -u cmyk</code>) and saved in
+      <code>auth/setup-code.txt</code> in the CMYK data folder.</p>
+    <label class="field">Email <input id="s-email" type="email" autocomplete="username" required></label>
+    <label class="field">Password <input id="s-pass" type="password" autocomplete="new-password" minlength="10" required></label>
+    <label class="field">Repeat password <input id="s-pass2" type="password" autocomplete="new-password" minlength="10" required></label>
+    <p class="muted small">At least 10 characters.</p>
+    <button class="primary" type="submit">Create login</button>
+    <p class="err" id="s-err" role="alert"></p>
+  </form>
+
+  <form class="dropbox auth" id="login-form" data-api="/api/auth/login" hidden>
+    <h1>Sign in</h1>
+    <label class="field">Email <input id="l-email" type="email" autocomplete="username" required></label>
+    <label class="field">Password <input id="l-pass" type="password" autocomplete="current-password" required></label>
+    <button class="primary" type="submit">Sign in</button>
+    <p class="err" id="l-err" role="alert"></p>
+  </form>
+</main>
+
+<script src="login.js"></script>
+</body>
+</html>

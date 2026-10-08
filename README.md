@@ -356,7 +356,7 @@ The starter project is in this folder.
 Layout:
 
 - `cmyk/engine/` - checks (`checks.py`) and profile loading (`profiles.py`); no web code, so it can be reused later
-- `cmyk/app.py` - FastAPI service (localhost only); `cmyk/jobs.py` job storage; `cmyk/report.py` HTML report
+- `cmyk/app.py` - FastAPI service (localhost only); `cmyk/jobs.py` job storage; `cmyk/report.py` HTML report; `cmyk/auth.py` server-install login (first-start setup, sessions)
 - `cmyk/static/` - dashboard UI (checklist with traffic lights, page preview with overlays, comments, sign-off)
 - `profiles/` - the three print profiles from the design team's artwork checklist (editable JSON)
 - `tests/` - fixtures and tests

@@ -29,8 +29,11 @@ function svg(tag, attrs = {}) {
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   return el;
 }
+const toLogin = () => location.replace("/login.html");  // server install: session ended
+
 async function api(path, opts = {}) {
   const r = await fetch(path, opts);
+  if (r.status === 401) { toLogin(); return new Promise(() => {}); }
   if (!r.ok) {
     let msg = r.statusText;
     try { msg = (await r.json()).detail || msg; } catch (_) {}
@@ -41,6 +44,15 @@ async function api(path, opts = {}) {
 
 /* ---------- start-up ---------- */
 async function init() {
+  const who = await api("/api/auth/state");
+  if (who.server) {
+    $("who").textContent = who.email; $("who").hidden = false;
+    $("btn-logout").hidden = false;
+    $("btn-logout").addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { method: "POST" }); toLogin();
+    });
+    $("privacy").textContent = "Files are uploaded to this private CMYK server. Close the job when you're done to delete it.";
+  }
   const p = await api("/api/profiles");
   S.profiles = p.profiles; S.profileId = p.default;
   const sel = $("profile");
@@ -95,6 +107,7 @@ function upload(file) {
   xhr.upload.onprogress = (e) => { if (e.lengthComputable) bar.firstElementChild.style.width = (e.loaded / e.total * 100) + "%"; };
   xhr.onload = () => {
     bar.hidden = true;
+    if (xhr.status === 401) { toLogin(); return; }
     if (xhr.status !== 200) {
       let m = "Upload failed"; try { m = JSON.parse(xhr.responseText).detail; } catch (_) {}
       $("uperr").textContent = m; return;

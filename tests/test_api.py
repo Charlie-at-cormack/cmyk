@@ -10,8 +10,9 @@ from tests.make_fixtures import make_brochure, make_clean
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("CMYK_DATA_DIR", str(tmp_path / "data"))
     import importlib
-    from cmyk import jobs
+    from cmyk import auth, jobs
     importlib.reload(jobs)
+    importlib.reload(auth)
     from cmyk import app as appmod
     importlib.reload(appmod)
     return TestClient(appmod.app, base_url="http://localhost:8000")
@@ -74,33 +75,65 @@ def test_refuses_foreign_host_and_origin(client, tmp_path):
     assert r.status_code == 403
 
 
-def test_server_install_needs_password(client, monkeypatch):
+@pytest.fixture()
+def server(client, monkeypatch):
+    """A server install on cmyk.example.com (login on), sharing the client fixture's data dir."""
     import importlib
     from cmyk import app as appmod
     monkeypatch.setenv("CMYK_ALLOWED_HOSTS", "cmyk.example.com")
-    monkeypatch.delenv("CMYK_PASSWORD", raising=False)
-    with pytest.raises(RuntimeError):
-        importlib.reload(appmod)
-
-
-def test_server_host_with_login(client, monkeypatch):
-    import importlib
-    from cmyk import app as appmod
-    monkeypatch.setenv("CMYK_ALLOWED_HOSTS", "cmyk.example.com")
-    monkeypatch.setenv("CMYK_USER", "studio")
-    monkeypatch.setenv("CMYK_PASSWORD", "s3cret pass")
     importlib.reload(appmod)
-    srv = TestClient(appmod.app, base_url="https://cmyk.example.com")
-    r = srv.get("/api/profiles")
-    assert r.status_code == 401 and r.headers["www-authenticate"].startswith("Basic")
-    assert srv.get("/api/profiles", auth=("studio", "wrong")).status_code == 401
-    assert srv.get("/api/profiles", auth=("studio", "s3cret pass")).status_code == 200
-    assert srv.get("/", auth=("studio", "s3cret pass")).status_code == 200
-    r = srv.post("/api/jobs/abc/check", json={}, auth=("studio", "s3cret pass"),
-                 headers={"Origin": "https://evil.example"})
+    return lambda: TestClient(appmod.app, base_url="https://cmyk.example.com")
+
+
+def test_local_run_has_no_login(client):
+    assert client.get("/api/auth/state").json() == {"server": False, "setup": False, "email": None}
+    assert client.post("/api/auth/login", json={}).status_code == 404
+
+
+def test_server_first_start_setup_then_sign_in(server, tmp_path):
+    srv = server()
+    r = srv.get("/", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/login.html"
+    assert srv.get("/api/profiles").status_code == 401
+    assert srv.get("/login.html").status_code == 200
+    assert srv.get("/api/auth/state").json()["setup"] is True
+
+    code = (tmp_path / "data" / "auth" / "setup-code.txt").read_text().strip()
+    good = {"code": code, "email": " Studio@Example.com ", "password": "long enough pass"}
+    assert srv.post("/api/auth/setup", json={**good, "code": "0000-0000-0000"}).status_code == 403
+    assert srv.post("/api/auth/setup", json={**good, "password": "short"}).status_code == 400
+    assert srv.post("/api/auth/setup", json={**good, "email": "nope"}).status_code == 400
+    r = srv.post("/api/auth/setup", json={**good, "code": code.upper()})
+    assert r.status_code == 200 and r.json()["email"] == "studio@example.com"
+    assert "httponly" in r.headers["set-cookie"].lower() and "secure" in r.headers["set-cookie"].lower()
+    assert srv.get("/api/profiles").status_code == 200
+    assert srv.get("/api/auth/state").json() == {"server": True, "setup": False, "email": "studio@example.com"}
+    assert not (tmp_path / "data" / "auth" / "setup-code.txt").exists()
+    assert srv.post("/api/auth/setup", json=good).status_code == 409
+
+    other = server()
+    assert other.post("/api/auth/login", json={"email": "studio@example.com", "password": "wrong"}).status_code == 401
+    assert other.post("/api/auth/login", json={"email": "studio@example.com",
+                                               "password": "long enough pass"}).status_code == 200
+    assert other.get("/", follow_redirects=False).status_code == 200
+    r = other.post("/api/jobs/abc/check", json={}, headers={"Origin": "https://evil.example"})
     assert r.status_code == 403
-    assert TestClient(appmod.app, base_url="http://evil.example").get(
-        "/api/profiles", auth=("studio", "s3cret pass")).status_code == 403
+    assert other.post("/api/auth/logout").status_code == 200
+    assert other.get("/api/profiles").status_code == 401
+
+    forged = server()
+    tok = srv.cookies.get("cmyk_session")
+    forged.cookies.set("cmyk_session", tok[:-1] + ("1" if tok[-1] == "0" else "0"))
+    assert forged.get("/api/profiles").status_code == 401
+    assert TestClient(srv.app, base_url="http://evil.example").get("/api/profiles").status_code == 403
+
+
+def test_server_sign_in_is_throttled(server):
+    srv = server()
+    bad = {"email": "a@example.com", "password": "wrong password"}
+    for _ in range(5):
+        assert srv.post("/api/auth/login", json=bad).status_code == 401
+    assert srv.post("/api/auth/login", json=bad).status_code == 429
 
 
 def test_clean_pdf_only_needs_manual_checks(client, tmp_path):
