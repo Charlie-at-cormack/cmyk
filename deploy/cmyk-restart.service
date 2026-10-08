@@ -1,0 +1,7 @@
+# /etc/systemd/system/cmyk-restart.service - started by cmyk-restart.path.
+[Unit]
+Description=Restart CMYK
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl restart cmyk.service

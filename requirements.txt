@@ -1,0 +1,6 @@
+# Pin exact versions with `pip freeze` / `uv lock` once the first prototype works,
+# so every machine installs identical library versions.
+pymupdf>=1.24
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9

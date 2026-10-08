@@ -1,0 +1,10 @@
+# /etc/systemd/system/cmyk-restart.path - restarts CMYK when a Plesk Git deploy writes .deployed.
+# The subscription user can't restart a system service itself, so the deploy action only touches this file.
+[Unit]
+Description=Restart CMYK after a Plesk Git deploy
+
+[Path]
+PathChanged=__HOME__/cmyk-app/.deployed
+
+[Install]
+WantedBy=multi-user.target

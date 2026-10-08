@@ -1,0 +1,19 @@
+{
+  "id": "brochure",
+  "name": "Brochures, books, magazines",
+  "trim_mm": null,
+  "bleed_mm": 3,
+  "crop_marks": "required",
+  "safe_margin_mm": 3,
+  "dpi_warn": 300,
+  "dpi_fail": 150,
+  "rgb": "fail",
+  "max_spot_colours": 1,
+  "overprint": "fail",
+  "fonts_embedded": "fail",
+  "live_text": "ignore",
+  "manual_checks": [
+    {"id": "misrep", "label": "Is Misrep updated?"},
+    {"id": "cover_reversed", "label": "Custom cover artwork reversed? (check with printer / printer's artwork guide)"}
+  ]
+}

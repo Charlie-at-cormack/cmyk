@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CMYK Preflight</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand" title="Cormack Media Yield Kontrol">
+    <span class="dots"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
+    <b>CMYK</b><span class="sub">Cormack Media Yield Kontrol</span>
+  </div>
+  <div class="fileinfo" id="fileinfo"></div>
+  <div class="spacer"></div>
+  <label class="profile">Profile
+    <select id="profile"></select>
+  </label>
+  <button id="btn-settings" class="ghost" disabled>Profile settings</button>
+  <button id="btn-new" class="ghost" hidden>Close job</button>
+</header>
+
+<main id="drop" class="drop">
+  <div class="dropbox" id="dropbox">
+    <h1>Drop a print-ready PDF here</h1>
+    <p>or <label class="link"><input type="file" id="file" accept="application/pdf,.pdf" hidden>choose a file</label></p>
+    <p class="muted">Files stay on this computer. Nothing is uploaded to the internet.</p>
+    <div class="bar" id="upbar" hidden><i></i></div>
+    <p class="err" id="uperr"></p>
+  </div>
+</main>
+
+<div class="layout" id="work" hidden>
+  <aside class="left">
+    <section>
+      <h3>Checklist</h3>
+      <div id="summary" class="summary"></div>
+      <ul id="stages" class="stages"></ul>
+    </section>
+    <section id="manual-sec" hidden>
+      <h3>Manual checks</h3>
+      <ul id="manual" class="manual"></ul>
+    </section>
+    <section>
+      <h3>Sign-off</h3>
+      <label class="field">Reviewer <input id="reviewer" placeholder="Your name"></label>
+      <label class="field">Overall comment <textarea id="overall" rows="3"></textarea></label>
+      <ul id="blockers" class="blockers"></ul>
+      <div class="btnrow">
+        <button id="btn-sign" class="ok">Sign off</button>
+        <button id="btn-changes" class="warnbtn">Changes required</button>
+      </div>
+      <div class="btnrow">
+        <a id="btn-report" class="btn" target="_blank">Open report</a>
+        <a id="btn-json" class="btn" target="_blank">JSON</a>
+      </div>
+      <p class="muted small" id="outcome-line"></p>
+    </section>
+  </aside>
+
+  <section class="centre">
+    <div class="toolbar">
+      <button id="pg-prev" class="ghost" aria-label="Previous page">&lsaquo;</button>
+      <span id="pg-label"></span>
+      <button id="pg-next" class="ghost" aria-label="Next page">&rsaquo;</button>
+      <span class="sep"></span>
+      <button id="z-out" class="ghost" aria-label="Zoom out">&minus;</button>
+      <span id="z-label">100%</span>
+      <button id="z-in" class="ghost" aria-label="Zoom in">+</button>
+      <span class="sep"></span>
+      <label class="chk"><input type="checkbox" id="show-guides" checked> Guides</label>
+      <label class="chk"><input type="checkbox" id="show-issues" checked> Issues</label>
+      <button id="tool-marker" class="ghost">&#9633; Add marker</button>
+      <span class="spacer"></span>
+      <button id="btn-next-issue" class="primary">Review next issue</button>
+    </div>
+    <div class="legend"><i class="g-trim"></i>Trim <i class="g-bleed"></i>Bleed <i class="g-safe"></i>Safe area</div>
+    <div class="scroller" id="scroller"><div class="pagewrap" id="pagewrap"></div></div>
+  </section>
+
+  <aside class="right">
+    <section id="progress" hidden>
+      <h3>Analysing&hellip;</h3>
+      <div class="bar"><i id="progbar"></i></div>
+      <p class="muted" id="proglabel"></p>
+    </section>
+    <section id="detail"></section>
+    <section>
+      <h3 id="list-title">Findings</h3>
+      <ul id="issues" class="issues"></ul>
+    </section>
+  </aside>
+</div>
+
+<aside id="settings" class="drawer" hidden>
+  <div class="drawer-head"><h3>Profile settings</h3><button id="set-close" class="ghost" aria-label="Close">&times;</button></div>
+  <p class="muted small">Values from the print house. Changes apply to this job only; the saved profile file is not modified.</p>
+  <form id="set-form"></form>
+  <button id="set-apply" class="primary">Re-run checks</button>
+</aside>
+
+<script src="app.js"></script>
+</body>
+</html>

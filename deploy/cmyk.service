@@ -1,0 +1,20 @@
+# /etc/systemd/system/cmyk.service - the CMYK service, listening on 127.0.0.1 only; nginx proxies to it.
+# Placeholders are filled in by the sed command in deploy/PLESK.md.
+[Unit]
+Description=CMYK PDF preflight
+After=network.target
+
+[Service]
+Type=simple
+User=__SYSUSER__
+Group=psacln
+WorkingDirectory=__HOME__/cmyk-app
+EnvironmentFile=/etc/cmyk.env
+ExecStart=__HOME__/cmyk-app/.venv/bin/python -m cmyk --no-browser --port __PORT__
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

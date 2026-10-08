@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+._*
+# Job data (uploaded PDFs, renders, review state) lives outside the repo, but just in case:
+jobs/
+# Models and large test PDFs are never committed
+models/
+testpdfs/
+*.log
+# Design source files (56 MB); export what the UI needs into cmyk/static/
+brand/
+# Server secrets and the Plesk deploy trigger (deploy/PLESK.md)
+.env
+.deployed

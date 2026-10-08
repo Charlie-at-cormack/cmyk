@@ -1,0 +1,16 @@
+{
+  "id": "signage_above_a0",
+  "name": "Signage above A0",
+  "trim_mm": null,
+  "bleed_mm": 0,
+  "crop_marks": "forbidden",
+  "safe_margin_mm": 0,
+  "dpi_warn": 300,
+  "dpi_fail": 100,
+  "rgb": "fail",
+  "max_spot_colours": 0,
+  "overprint": "fail",
+  "fonts_embedded": "warning",
+  "live_text": "review",
+  "manual_checks": []
+}
