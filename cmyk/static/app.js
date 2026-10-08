@@ -31,6 +31,28 @@ function svg(tag, attrs = {}) {
 }
 const toLogin = () => location.replace("/login.html");  // server install: session ended
 
+/* CMYK pill meter: a 0..1 fraction fills C, then M, Y and K. */
+function setPills(el, frac) {
+  el.querySelectorAll("i").forEach((p, i) => p.style.setProperty("--f", Math.min(Math.max(frac * 4 - i, 0), 1)));
+}
+
+/* Welcome screen: stays until the app is ready, and for at least one pill cycle on a session's first visit. */
+const SPLASH_MIN = (() => {
+  try {
+    if (sessionStorage.getItem("cmyk-welcomed")) return 0;
+    sessionStorage.setItem("cmyk-welcomed", "1");
+  } catch (_) {}
+  return 1800;
+})();
+const splashStart = performance.now();
+function hideSplash() {
+  setTimeout(() => {
+    const s = $("splash"); if (!s) return;
+    s.classList.add("done");
+    setTimeout(() => s.remove(), 600);
+  }, Math.max(0, SPLASH_MIN - (performance.now() - splashStart)));
+}
+
 async function api(path, opts = {}) {
   const r = await fetch(path, opts);
   if (r.status === 401) { toLogin(); return new Promise(() => {}); }
@@ -46,8 +68,13 @@ async function api(path, opts = {}) {
 async function init() {
   const who = await api("/api/auth/state");
   if (who.server) {
-    $("who").textContent = who.email; $("who").hidden = false;
-    $("btn-logout").hidden = false;
+    const label = who.name || who.email || "";
+    $("who-name").textContent = label;
+    $("who-sub").textContent = who.role === "admin" ? "Admin" : "Member";
+    $("who").title = who.email || "";
+    $("avatar").textContent = label.trim().charAt(0).toUpperCase();
+    $("sb-local").hidden = true;
+    $("sb-nav").hidden = $("avatar").hidden = $("who").hidden = $("btn-logout").hidden = false;
     $("btn-logout").addEventListener("click", async () => {
       await fetch("/api/auth/logout", { method: "POST" }); toLogin();
     });
@@ -100,11 +127,11 @@ async function init() {
 /* ---------- upload / run ---------- */
 function upload(file) {
   $("uperr").textContent = "";
-  const bar = $("upbar"); bar.hidden = false; bar.firstElementChild.style.width = "0";
+  const bar = $("upbar"); bar.hidden = false; setPills(bar, 0);
   const fd = new FormData(); fd.append("file", file);
   const xhr = new XMLHttpRequest();
   xhr.open("POST", "/api/jobs");
-  xhr.upload.onprogress = (e) => { if (e.lengthComputable) bar.firstElementChild.style.width = (e.loaded / e.total * 100) + "%"; };
+  xhr.upload.onprogress = (e) => { if (e.lengthComputable) setPills(bar, e.loaded / e.total); };
   xhr.onload = () => {
     bar.hidden = true;
     if (xhr.status === 401) { toLogin(); return; }
@@ -113,14 +140,15 @@ function upload(file) {
       $("uperr").textContent = m; return;
     }
     S.job = JSON.parse(xhr.responseText); S.page = 1; S.selected = null; S.stageFilter = null;
-    $("drop").hidden = true; $("work").hidden = false; $("btn-new").hidden = false; $("btn-settings").disabled = false;
+    $("drop").hidden = true; $("work").hidden = $("sb-job").hidden = false;
+    $("btn-new").hidden = false; $("btn-settings").disabled = false;
     runCheck();
   };
   xhr.onerror = () => { bar.hidden = true; $("uperr").textContent = "Upload failed"; };
   xhr.send(fd);
 }
 async function runCheck() {
-  $("progress").hidden = false; $("progbar").style.width = "0";
+  $("progress").hidden = false; setPills($("progbar"), 0);
   S.job = await api(`/api/jobs/${S.job.id}/check`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ profile_id: S.profileId, overrides: S.overrides }),
@@ -132,7 +160,7 @@ async function runCheck() {
 async function pollJob() {
   const j = await api(`/api/jobs/${S.job.id}`);
   const p = j.progress || { page: 0, total: 0 };
-  $("progbar").style.width = (p.total ? (p.page / p.total) * 100 : 0) + "%";
+  setPills($("progbar"), p.total ? p.page / p.total : 0);
   $("proglabel").textContent = `Analysing page ${p.page} of ${p.total}`;
   if (j.status === "done" || j.status === "error") {
     clearInterval(S.poll); $("progress").hidden = true;
@@ -145,7 +173,8 @@ async function closeJob() {
   if (S.job) await fetch(`/api/jobs/${S.job.id}`, { method: "DELETE" });
   clearInterval(S.poll);
   S.job = null; S.overrides = {};
-  $("work").hidden = true; $("drop").hidden = false; $("btn-new").hidden = true; $("btn-settings").disabled = true;
+  $("work").hidden = $("sb-job").hidden = true; $("drop").hidden = false;
+  $("btn-new").hidden = true; $("btn-settings").disabled = true;
   $("fileinfo").textContent = ""; $("file").value = "";
 }
 
@@ -458,4 +487,4 @@ function applySettings() {
 }
 
 window.addEventListener("resize", () => { if (S.job?.result) renderPreview(); });
-init();
+init().finally(hideSplash);

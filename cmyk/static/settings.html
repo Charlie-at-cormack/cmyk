@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · CMYK Preflight</title>
+<link rel="preload" href="fonts/jost.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar on-dark">
+    <div class="sb-brand">
+      <img class="logo" src="brand/cormack-logo.svg" alt="Cormack">
+      <div class="sb-product">
+        <span class="cmyk-word">CMYK</span>
+        <span class="pills" aria-hidden="true"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
+      </div>
+      <div class="tagline">Cormack Media Yield Kit</div>
+    </div>
+    <nav class="sb-nav">
+      <a class="sb-link" href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+        Preflight</a>
+      <a class="sb-link" href="/settings.html" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        Settings</a>
+    </nav>
+    <div class="sb-foot">
+      <div class="avatar" id="avatar"></div>
+      <div class="who" id="who"><b id="who-name"></b><span id="who-sub"></span></div>
+      <button id="btn-logout" class="ghost" title="Sign out" aria-label="Sign out">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page">
+      <header class="page-head">
+        <h1>Settings</h1>
+        <p class="muted">Your login, the people who can use CMYK, and outgoing email.</p>
+      </header>
+
+      <div class="cards">
+        <section class="card">
+          <div class="card-head"><div><h2>Your account</h2><p class="muted small" id="acct-line"></p></div></div>
+          <form id="pw-form">
+            <div class="grid2">
+              <label class="field">Current password <input type="password" id="pw-current" autocomplete="current-password" required></label>
+              <span></span>
+              <label class="field">New password <input type="password" id="pw-new" autocomplete="new-password" minlength="10" required></label>
+              <label class="field">Repeat new password <input type="password" id="pw-new2" autocomplete="new-password" minlength="10" required></label>
+            </div>
+            <div class="form-actions">
+              <button class="primary" type="submit">Change password</button>
+              <button type="button" id="pw-gen">Generate a password</button>
+              <span class="msg" id="pw-msg" role="status"></span>
+            </div>
+          </form>
+        </section>
+
+        <section class="card" id="card-users" hidden>
+          <div class="card-head"><div><h2>Users</h2><p class="muted small">Everyone who can sign in. Admins can also manage users and email.</p></div></div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Added</th><th><span hidden>Actions</span></th></tr></thead>
+              <tbody id="users"></tbody>
+            </table>
+          </div>
+          <div class="divider"></div>
+          <h4>Add a user</h4>
+          <form id="add-form">
+            <div class="grid2">
+              <label class="field">Email <input type="email" id="add-email" required></label>
+              <label class="field">Name <input id="add-name" placeholder="Optional"></label>
+              <label class="field">Role
+                <select id="add-role"><option value="user">Member</option><option value="admin">Admin</option></select>
+              </label>
+            </div>
+            <label class="check"><input type="checkbox" id="add-send"> Email the login details to them <span class="muted small" id="add-send-hint"></span></label>
+            <div class="form-actions">
+              <button class="primary" type="submit">Add user</button>
+              <span class="msg" id="add-msg" role="status"></span>
+            </div>
+          </form>
+          <p class="muted small">CMYK generates each new user's password. You see it once, straight after adding them.</p>
+        </section>
+
+        <section class="card" id="card-smtp" hidden>
+          <div class="card-head">
+            <div><h2>Email (SMTP)</h2><p class="muted small">Sends login details to new users and password resets.</p></div>
+            <span class="pill" id="smtp-status"></span>
+          </div>
+          <form id="smtp-form">
+            <div class="grid2">
+              <label class="field">SMTP server <input id="smtp-host" placeholder="smtp.example.com" autocomplete="off"></label>
+              <div class="grid2" style="gap:0 10px">
+                <label class="field">Port <input type="number" id="smtp-port" min="1" max="65535"></label>
+                <label class="field">Security
+                  <select id="smtp-sec"><option value="starttls">STARTTLS</option><option value="ssl">SSL/TLS</option><option value="none">None</option></select>
+                </label>
+              </div>
+              <label class="field">Username <input id="smtp-user" autocomplete="off"></label>
+              <label class="field">Password <input type="password" id="smtp-pass" autocomplete="new-password"></label>
+              <label class="field">From email <input type="email" id="smtp-from" placeholder="cmyk@example.com"></label>
+              <label class="field">From name <input id="smtp-from-name"></label>
+            </div>
+            <label class="check" id="smtp-clear-row" hidden><input type="checkbox" id="smtp-clear"> Remove the saved password</label>
+            <div class="form-actions">
+              <button class="primary" type="submit">Save email settings</button>
+              <span class="msg" id="smtp-msg" role="status"></span>
+            </div>
+          </form>
+          <div class="divider"></div>
+          <h4>Send a test email</h4>
+          <form id="test-form" class="inline">
+            <input type="email" id="test-to" placeholder="name@example.com" required aria-label="Send a test email to">
+            <button type="submit">Send test</button>
+          </form>
+          <p class="msg small" id="test-msg" role="status"></p>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<dialog id="pw-dialog">
+  <h2 id="dlg-title"></h2>
+  <p class="muted" id="dlg-text"></p>
+  <div class="secret"><code id="dlg-pass"></code><button type="button" id="dlg-copy">Copy</button></div>
+  <p class="small" id="dlg-mail"></p>
+  <div class="form-actions" style="justify-content:flex-end"><button class="primary" id="dlg-close" type="button">Done</button></div>
+</dialog>
+
+<script src="settings.js"></script>
+</body>
+</html>

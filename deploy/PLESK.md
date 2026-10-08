@@ -2,7 +2,12 @@
 
 CMYK runs as a systemd service on `127.0.0.1`, and the domain's nginx proxies to it. Plesk Git pulls each push to `main`, runs `install.sh`, and the service restarts on its own.
 
-Setting `CMYK_ALLOWED_HOSTS` (the public host name) turns on the login, because uploaded PDFs are client artwork. On first start the site shows **Create the login**: enter the one-time setup code from the server log, plus the email and password to use. After that it shows **Sign in**. Sessions last 7 days. After 5 wrong attempts from one address, sign-in pauses for 15 minutes.
+Setting `CMYK_ALLOWED_HOSTS` (the public host name) turns on the login, because uploaded PDFs are client artwork.
+
+- **First start:** the site shows **Create the admin login**. Enter the one-time setup code from the server log, plus your email and a password.
+- **After that:** the site shows **Sign in**. Sessions last 7 days. After 5 wrong attempts from one address, sign-in pauses for 15 minutes.
+- **Managing people:** admins use **Settings** in the sidebar to add and remove users, make users admins, and reset passwords. CMYK generates every new and reset password and shows it once. With email set up, it also emails it to the person.
+- **Email (SMTP):** set up under **Settings > Email**, with a test button. The SMTP password is saved in `cmyk-data/auth/smtp.json`, readable only by the site user, and is never sent back to the browser. Some hosts block outgoing mail ports (587/465). If the test fails with a timeout, check the server firewall.
 
 You need root SSH on the server, plus a domain or subdomain in Plesk (below: `cmyk.example.com`).
 
@@ -74,12 +79,13 @@ journalctl -u cmyk -n 20 --no-pager | grep 'setup code'                       # 
 1. Untick **Smart static files processing** and **Serve static files directly by nginx**. Otherwise nginx looks for `app.js`, `style.css` and the page previews in `httpdocs`, and they 404.
 2. Paste `deploy/nginx.conf` into **Additional nginx directives**, the large box at the very bottom of the page. Replace `__PORT__`, then click **Apply**. Don't use the static-file extensions field or the Apache boxes.
 
-Open `https://cmyk.example.com`. The site shows **Create the login**. Enter the setup code, either from the `journalctl` line above or from `cat $H/cmyk-data/auth/setup-code.txt`, then your email and a password of at least 10 characters. You're signed in straight away. The code stops working once it has been used.
+Open `https://cmyk.example.com`. The site shows **Create the admin login**. Enter the setup code, either from the `journalctl` line above or from `cat $H/cmyk-data/auth/setup-code.txt`, then your email and a password of at least 10 characters. You're signed in straight away. The code stops working once it has been used.
 
 ## Day to day
 
 - **Update**: push to `main`. The webhook deploys, `install.sh` re-syncs `requirements.lock`, and the service restarts. A restart cancels any analysis in progress, but uploaded files are kept.
 - **Logs**: `journalctl -u cmyk -n 100`. Plesk's deploy log is under the repository's settings.
-- **Forgotten password, or a new login**: `rm $H/cmyk-data/auth/users.json && systemctl restart cmyk`. This signs everyone out and brings back **Create the login** with a new setup code (in `journalctl -u cmyk`).
+- **Forgotten password**: another admin resets it in **Settings > Users**. Everyone can change their own password under **Settings > Your account**.
+- **Locked out (no admin can sign in)**: `rm $H/cmyk-data/auth/users.json && systemctl restart cmyk`. This **removes every login** and brings back **Create the admin login** with a new setup code (in `journalctl -u cmyk`).
 - **Keep one process**: job progress is held in memory, so don't add uvicorn workers.
 - **Old jobs**: jobs older than 7 days are removed when the service starts, so on a server that happens at each deploy.

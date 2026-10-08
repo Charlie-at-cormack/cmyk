@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in · CMYK Preflight</title>
+<link rel="preload" href="fonts/jost.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<header class="top">
-  <div class="brand" title="Cormack Media Yield Kontrol">
-    <span class="dots"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
-    <b>CMYK</b><span class="sub">Cormack Media Yield Kontrol</span>
-  </div>
-</header>
+<body class="brand-bg on-dark">
+<main class="auth-page">
+  <img class="auth-logo" src="brand/cormack-logo.svg" alt="Cormack">
 
-<main class="drop">
-  <form class="dropbox auth" id="setup-form" data-api="/api/auth/setup" hidden>
-    <h1>Create the login</h1>
-    <p class="muted">This CMYK server is starting for the first time. Choose the email and password to sign in with.</p>
+  <form class="auth-card" id="setup-form" data-api="/api/auth/setup" hidden>
+    <div class="auth-head">
+      <span class="cmyk-word">CMYK</span>
+      <span class="pills" aria-hidden="true"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
+    </div>
+    <h1>Create the admin login</h1>
+    <p class="muted">This CMYK server is starting for the first time. The login you create here can add everyone else.</p>
     <label class="field">Setup code <input id="s-code" autocomplete="off" spellcheck="false" required></label>
     <p class="muted small">Shown in the server log (<code>journalctl -u cmyk</code>) and saved in
       <code>auth/setup-code.txt</code> in the CMYK data folder.</p>
@@ -29,13 +29,19 @@
     <p class="err" id="s-err" role="alert"></p>
   </form>
 
-  <form class="dropbox auth" id="login-form" data-api="/api/auth/login" hidden>
+  <form class="auth-card" id="login-form" data-api="/api/auth/login" hidden>
+    <div class="auth-head">
+      <span class="cmyk-word">CMYK</span>
+      <span class="pills" aria-hidden="true"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
+    </div>
     <h1>Sign in</h1>
     <label class="field">Email <input id="l-email" type="email" autocomplete="username" required></label>
     <label class="field">Password <input id="l-pass" type="password" autocomplete="current-password" required></label>
     <button class="primary" type="submit">Sign in</button>
     <p class="err" id="l-err" role="alert"></p>
   </form>
+
+  <p class="tagline">Cormack Media Yield Kit</p>
 </main>
 
 <script src="login.js"></script>

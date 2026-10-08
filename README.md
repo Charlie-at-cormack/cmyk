@@ -356,8 +356,8 @@ The starter project is in this folder.
 Layout:
 
 - `cmyk/engine/` - checks (`checks.py`) and profile loading (`profiles.py`); no web code, so it can be reused later
-- `cmyk/app.py` - FastAPI service (localhost only); `cmyk/jobs.py` job storage; `cmyk/report.py` HTML report; `cmyk/auth.py` server-install login (first-start setup, sessions)
-- `cmyk/static/` - dashboard UI (checklist with traffic lights, page preview with overlays, comments, sign-off)
+- `cmyk/app.py` - FastAPI service (localhost only); `cmyk/jobs.py` job storage; `cmyk/report.py` HTML report; `cmyk/auth.py` server-install logins (first-start setup, users and roles, sessions); `cmyk/mailer.py` SMTP settings and emails
+- `cmyk/static/` - dashboard UI (left sidebar with checklist and sign-off, page preview with overlays, findings), welcome screen, sign-in and settings pages; `brand/` and `fonts/` hold the Cormack logo, photo and Jost font (SIL OFL)
 - `profiles/` - the three print profiles from the design team's artwork checklist (editable JSON)
 - `tests/` - fixtures and tests
 - `deploy/` - server install on Plesk behind nginx, with a login (`deploy/PLESK.md`)

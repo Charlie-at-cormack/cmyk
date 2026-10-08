@@ -86,7 +86,8 @@ def server(client, monkeypatch):
 
 
 def test_local_run_has_no_login(client):
-    assert client.get("/api/auth/state").json() == {"server": False, "setup": False, "email": None}
+    assert client.get("/api/auth/state").json() == {"server": False, "setup": False, "email": None,
+                                                    "role": None, "name": None}
     assert client.post("/api/auth/login", json={}).status_code == 404
 
 
@@ -96,6 +97,10 @@ def test_server_first_start_setup_then_sign_in(server, tmp_path):
     assert r.status_code == 303 and r.headers["location"] == "/login.html"
     assert srv.get("/api/profiles").status_code == 401
     assert srv.get("/login.html").status_code == 200
+    for asset in ("/brand/cormack-logo.svg", "/brand/background.jpg", "/fonts/jost.woff2"):
+        assert srv.get(asset, follow_redirects=False).status_code == 200  # the sign-in page needs them
+    assert srv.get("/settings.html", follow_redirects=False).status_code == 303
+    assert srv.get("/brand/../app.js", follow_redirects=False).status_code == 303
     assert srv.get("/api/auth/state").json()["setup"] is True
 
     code = (tmp_path / "data" / "auth" / "setup-code.txt").read_text().strip()
@@ -107,7 +112,8 @@ def test_server_first_start_setup_then_sign_in(server, tmp_path):
     assert r.status_code == 200 and r.json()["email"] == "studio@example.com"
     assert "httponly" in r.headers["set-cookie"].lower() and "secure" in r.headers["set-cookie"].lower()
     assert srv.get("/api/profiles").status_code == 200
-    assert srv.get("/api/auth/state").json() == {"server": True, "setup": False, "email": "studio@example.com"}
+    assert srv.get("/api/auth/state").json() == {"server": True, "setup": False, "email": "studio@example.com",
+                                                 "role": "admin", "name": ""}
     assert not (tmp_path / "data" / "auth" / "setup-code.txt").exists()
     assert srv.post("/api/auth/setup", json=good).status_code == 409
 

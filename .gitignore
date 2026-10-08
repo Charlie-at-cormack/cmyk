@@ -11,7 +11,7 @@ models/
 testpdfs/
 *.log
 # Design source files (56 MB); export what the UI needs into cmyk/static/
-brand/
+/brand/
 # Server secrets and the Plesk deploy trigger (deploy/PLESK.md)
 .env
 .deployed

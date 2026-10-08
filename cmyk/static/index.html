@@ -4,95 +4,137 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CMYK Preflight</title>
+<link rel="preload" href="fonts/jost.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="top">
-  <div class="brand" title="Cormack Media Yield Kontrol">
-    <span class="dots"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
-    <b>CMYK</b><span class="sub">Cormack Media Yield Kontrol</span>
+
+<!-- Welcome / loading screen (Cormack design); app.js fades it out once the app is ready -->
+<div class="splash brand-bg on-dark" id="splash" role="status" aria-label="Loading CMYK">
+  <img class="splash-logo" src="brand/cormack-logo.svg" alt="Cormack">
+  <div class="brand-mark">
+    <div class="cmyk-word">CMYK</div>
+    <div class="pills loading" aria-hidden="true"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></div>
+    <div class="tagline">Cormack Media Yield Kit</div>
   </div>
-  <div class="fileinfo" id="fileinfo"></div>
-  <div class="spacer"></div>
-  <label class="profile">Profile
-    <select id="profile"></select>
-  </label>
-  <button id="btn-settings" class="ghost" disabled>Profile settings</button>
-  <button id="btn-new" class="ghost" hidden>Close job</button>
-  <span class="who" id="who" hidden></span>
-  <button id="btn-logout" class="ghost" hidden>Sign out</button>
-</header>
+</div>
 
-<main id="drop" class="drop">
-  <div class="dropbox" id="dropbox">
-    <h1>Drop a print-ready PDF here</h1>
-    <p>or <label class="link"><input type="file" id="file" accept="application/pdf,.pdf" hidden>choose a file</label></p>
-    <p class="muted" id="privacy">Files stay on this computer. Nothing is uploaded to the internet.</p>
-    <div class="bar" id="upbar" hidden><i></i></div>
-    <p class="err" id="uperr"></p>
-  </div>
-</main>
-
-<div class="layout" id="work" hidden>
-  <aside class="left">
-    <section>
-      <h3>Checklist</h3>
-      <div id="summary" class="summary"></div>
-      <ul id="stages" class="stages"></ul>
-    </section>
-    <section id="manual-sec" hidden>
-      <h3>Manual checks</h3>
-      <ul id="manual" class="manual"></ul>
-    </section>
-    <section>
-      <h3>Sign-off</h3>
-      <label class="field">Reviewer <input id="reviewer" placeholder="Your name"></label>
-      <label class="field">Overall comment <textarea id="overall" rows="3"></textarea></label>
-      <ul id="blockers" class="blockers"></ul>
-      <div class="btnrow">
-        <button id="btn-sign" class="ok">Sign off</button>
-        <button id="btn-changes" class="warnbtn">Changes required</button>
+<div class="app">
+  <aside class="sidebar on-dark">
+    <div class="sb-brand">
+      <img class="logo" src="brand/cormack-logo.svg" alt="Cormack">
+      <div class="sb-product">
+        <span class="cmyk-word">CMYK</span>
+        <span class="pills" aria-hidden="true"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></span>
       </div>
-      <div class="btnrow">
-        <a id="btn-report" class="btn" target="_blank">Open report</a>
-        <a id="btn-json" class="btn" target="_blank">JSON</a>
-      </div>
-      <p class="muted small" id="outcome-line"></p>
-    </section>
-  </aside>
-
-  <section class="centre">
-    <div class="toolbar">
-      <button id="pg-prev" class="ghost" aria-label="Previous page">&lsaquo;</button>
-      <span id="pg-label"></span>
-      <button id="pg-next" class="ghost" aria-label="Next page">&rsaquo;</button>
-      <span class="sep"></span>
-      <button id="z-out" class="ghost" aria-label="Zoom out">&minus;</button>
-      <span id="z-label">100%</span>
-      <button id="z-in" class="ghost" aria-label="Zoom in">+</button>
-      <span class="sep"></span>
-      <label class="chk"><input type="checkbox" id="show-guides" checked> Guides</label>
-      <label class="chk"><input type="checkbox" id="show-issues" checked> Issues</label>
-      <button id="tool-marker" class="ghost">&#9633; Add marker</button>
-      <span class="spacer"></span>
-      <button id="btn-next-issue" class="primary">Review next issue</button>
+      <div class="tagline">Cormack Media Yield Kit</div>
     </div>
-    <div class="legend"><i class="g-trim"></i>Trim <i class="g-bleed"></i>Bleed <i class="g-safe"></i>Safe area</div>
-    <div class="scroller" id="scroller"><div class="pagewrap" id="pagewrap"></div></div>
-  </section>
 
-  <aside class="right">
-    <section id="progress" hidden>
-      <h3>Analysing&hellip;</h3>
-      <div class="bar"><i id="progbar"></i></div>
-      <p class="muted" id="proglabel"></p>
+    <nav class="sb-nav" id="sb-nav" hidden>
+      <a class="sb-link" href="/" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+        Preflight</a>
+      <a class="sb-link" href="/settings.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        Settings</a>
+    </nav>
+
+    <section class="sb-section">
+      <h3>Job</h3>
+      <div class="sb-file" id="fileinfo"></div>
+      <label class="field" style="margin-top:12px">Print profile
+        <select id="profile"></select>
+      </label>
+      <div class="btnrow">
+        <button id="btn-settings" disabled>Profile settings</button>
+        <button id="btn-new" hidden>Close job</button>
+      </div>
     </section>
-    <section id="detail"></section>
-    <section>
-      <h3 id="list-title">Findings</h3>
-      <ul id="issues" class="issues"></ul>
-    </section>
+
+    <div id="sb-job" hidden>
+      <section class="sb-section">
+        <h3>Checklist</h3>
+        <div id="summary" class="summary"></div>
+        <ul id="stages" class="stages"></ul>
+      </section>
+      <section class="sb-section" id="manual-sec" hidden>
+        <h3>Manual checks</h3>
+        <ul id="manual" class="manual"></ul>
+      </section>
+      <section class="sb-section">
+        <h3>Sign-off</h3>
+        <label class="field">Reviewer <input id="reviewer" placeholder="Your name"></label>
+        <label class="field">Overall comment <textarea id="overall" rows="3"></textarea></label>
+        <ul id="blockers" class="blockers"></ul>
+        <div class="btnrow">
+          <button id="btn-sign" class="ok">Sign off</button>
+          <button id="btn-changes" class="warnbtn">Changes required</button>
+        </div>
+        <div class="btnrow">
+          <a id="btn-report" class="btn" target="_blank">Open report</a>
+          <a id="btn-json" class="btn" target="_blank">JSON</a>
+        </div>
+        <p class="muted small" id="outcome-line"></p>
+      </section>
+    </div>
+
+    <div class="sb-foot">
+      <div class="avatar" id="avatar" hidden></div>
+      <div class="who" id="who" hidden><b id="who-name"></b><span id="who-sub"></span></div>
+      <button id="btn-logout" class="ghost" hidden title="Sign out" aria-label="Sign out">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+      <span class="sb-local" id="sb-local">Running on this computer</span>
+    </div>
   </aside>
+
+  <main class="main">
+    <section id="drop" class="drop">
+      <div class="dropbox" id="dropbox">
+        <div class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></svg></div>
+        <h1>Drop a print-ready PDF here</h1>
+        <p>or <label class="link"><input type="file" id="file" accept="application/pdf,.pdf" hidden>choose a file</label></p>
+        <p class="muted small" id="privacy">Files stay on this computer. Nothing is uploaded to the internet.</p>
+        <div class="pills meter" id="upbar" hidden aria-label="Upload progress"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></div>
+        <p class="err" id="uperr"></p>
+      </div>
+    </section>
+
+    <div class="work" id="work" hidden>
+      <section class="centre">
+        <div class="toolbar">
+          <button id="pg-prev" class="ghost" aria-label="Previous page">&lsaquo;</button>
+          <span id="pg-label"></span>
+          <button id="pg-next" class="ghost" aria-label="Next page">&rsaquo;</button>
+          <span class="sep"></span>
+          <button id="z-out" class="ghost" aria-label="Zoom out">&minus;</button>
+          <span id="z-label">100%</span>
+          <button id="z-in" class="ghost" aria-label="Zoom in">+</button>
+          <span class="sep"></span>
+          <label class="chk"><input type="checkbox" id="show-guides" checked> Guides</label>
+          <label class="chk"><input type="checkbox" id="show-issues" checked> Issues</label>
+          <button id="tool-marker" class="ghost">&#9633; Add marker</button>
+          <span class="spacer"></span>
+          <button id="btn-next-issue" class="primary">Review next issue</button>
+        </div>
+        <div class="legend"><span><i class="g-trim"></i>Trim</span><span><i class="g-bleed"></i>Bleed</span><span><i class="g-safe"></i>Safe area</span></div>
+        <div class="scroller" id="scroller"><div class="pagewrap" id="pagewrap"></div></div>
+      </section>
+
+      <aside class="right">
+        <section class="card" id="progress" hidden>
+          <h3>Analysing&hellip;</h3>
+          <div class="pills meter" id="progbar"><i class="c"></i><i class="m"></i><i class="y"></i><i class="k"></i></div>
+          <p class="muted small" id="proglabel"></p>
+        </section>
+        <section class="card" id="detail"></section>
+        <section class="card">
+          <h3 id="list-title">Findings</h3>
+          <ul id="issues" class="issues"></ul>
+        </section>
+      </aside>
+    </div>
+  </main>
 </div>
 
 <aside id="settings" class="drawer" hidden>
